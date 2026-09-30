@@ -1,4 +1,4 @@
 University of Southampton C Programming course for Biomedical Engineering :D let's hope it's not too bad...
 I am also working on a side project that this course motivated me to do [TBG-2-C](https://github.com/NothingItIs/TBG-2-C/blob/main) which is going to be an upgraded (hopefully) version of the [old TBG](https://github.com/NothingItIs/TBG-2) I made in python ~2-3 years ago. 
 
-[NTS Essentials](nts_essentials\nts_all.h) is just a minature version of [NTSModule](https://github.com/NothingItIs/NTSModule) but for C rather than Python. Let's hope it doesn't get as big as since the quality degrades (but it is good practice tho!).
+[NTS Essentials](https://github.com/NothingItIs/University-C-Programming/blob/main/nts_essentials/nts_all.h) is just a minature version of [NTSModule](https://github.com/NothingItIs/NTSModule) but for C rather than Python. Let's hope it doesn't get as big as since the quality degrades (but it is good practice tho!).
