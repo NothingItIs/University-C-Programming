@@ -240,6 +240,21 @@ add_executable(
 
 
 # ------------------------------------------------------------
+# Link the C math library on Linux.
+# ------------------------------------------------------------
+
+if(UNIX AND NOT APPLE)
+
+    target_link_libraries(
+        ${TARGET_NAME}
+        PRIVATE
+        m
+    )
+
+endif()
+
+
+# ------------------------------------------------------------
 # GCC warnings, debugging and static analysis.
 #
 # This DOES NOT change your compiler.

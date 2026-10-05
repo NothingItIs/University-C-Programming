@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include "nts_system_funcs.h"
 
 #ifdef _WIN32
