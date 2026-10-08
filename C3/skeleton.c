@@ -20,9 +20,9 @@
 #define MAX_GEN    10000
 
 #define MUTATION_STRENGTH  0.1
-#define RND_INIT         4
+// #define RND_INIT         23748
 
-#define INIT_RANGE 20
+#define INIT_RANGE 1000
 
 
 void printheader(void);
@@ -38,46 +38,49 @@ int main(){
     float x, y;
     float ifit;   // inverse fitness
     int i;
-    float fit;
+    // float fit;
 
-    // printheader();
-    srand(RND_INIT);
-    initpop(population, POP_SIZE);
+    srand(2);
 
+    for(int j = 0; j < 10; j++){
 
-    while( best_ifit > EPSILON && gen < MAX_GEN ){
+        // printheader();
+        srand(rand());
+        initpop(population, POP_SIZE);
 
-        for(i=0; i < POP_SIZE; i++){
-            x = population[i];
+        printf("============== Loop %d ==============\n", j);
+        while( best_ifit > EPSILON && gen < MAX_GEN ){
 
+            for(i=0; i < POP_SIZE; i++){
+                x = population[i];
+
+                EQUATION;  // y = f(x)
+
+                ifit = fabs(y - Y_TARGET);
+
+                // printf("x= %f  =>  y=  %+f,    ifit = %f\n", x, y, ifit);
+
+                // Is there a better one?
+                if( ifit < best_ifit ){
+                    best_ifit = ifit;
+                    best = x;
+                }
+
+            }
+            x = best;
             EQUATION;  // y = f(x)
 
-            ifit = fabs(y - Y_TARGET);
+            printf("Generations %d with best solution:  x= %f --> f(x)= %f\n\n", ++gen, best, y);
 
-            // printf("x= %f  =>  y=  %+f,    ifit = %f\n", x, y, ifit);
-
-            // Is there a better one?
-            if( ifit < best_ifit ){
-                best_ifit = ifit;
-                best = x;
-            }
-
+            offspring( best, MUTATION_STRENGTH, population, POP_SIZE);        
+            // if (best_ifit > 0){
+            //     fit = 1/best_ifit;
+            // } else {
+            //     fit = -1.0;
+            // }
+            // printf("%d, %f\n", ++gen, fit);
         }
-        x = best;
-        EQUATION;  // y = f(x)
-
-        // printf("Generation %4d with best solution:  x= %f --> f(x)= %f\n\n", gen++, best, y);
-
-        offspring( best, MUTATION_STRENGTH, population, POP_SIZE);
-    
-        if (best_ifit > 0){
-            fit = 1/best_ifit;
-        } else {
-            fit = -1.0;
-        }
-        printf("%d, %f\n", gen++, fit);
-    }
-
+}
     
 }
 
