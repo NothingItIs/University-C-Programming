@@ -19,7 +19,7 @@
 #define POP_SIZE     100
 #define MAX_GEN    10000
 
-#define MUTATION_STRENGTH  0.1
+#define MUTATION_STRENGTH  0.3
 // #define RND_INIT         23748
 
 #define INIT_RANGE 1000
@@ -42,14 +42,16 @@ int main(){
 
     srand(2);
 
-    for(int j = 0; j < 10; j++){
+    printf("MUTATION STRENGTH: %f\n", MUTATION_STRENGTH);
+
+    for(int j = 0; j < 5; j++){
 
         // printheader();
         srand(rand());
         initpop(population, POP_SIZE);
         gen = 0;
         best_ifit = FLT_MAX;  // worst possible
-
+    
         printf("================================ Loop %d ================================\n", j);
         while( best_ifit > EPSILON && gen < MAX_GEN ){
 
@@ -67,8 +69,9 @@ int main(){
                     best_ifit = ifit;
                     best = x;
                 }
-                gen++;
+                
             }
+            gen++;
             x = best;
             EQUATION;  // y = f(x)
 
@@ -82,7 +85,8 @@ int main(){
 
             
         }
-        printf("Generations %d with best solution:  x= %f --> f(x)= %f\n========================================================================\n\n", ++gen, best, y);
+        printf("Generations %d with best solution:  x= %f --> f(x)= %f\n========================================================================\n\n", 
+            ++gen, best, y);
 
 }
     
