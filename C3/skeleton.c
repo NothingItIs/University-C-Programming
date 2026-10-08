@@ -47,8 +47,10 @@ int main(){
         // printheader();
         srand(rand());
         initpop(population, POP_SIZE);
+        gen = 0;
+        best_ifit = FLT_MAX;  // worst possible
 
-        printf("============== Loop %d ==============\n", j);
+        printf("================================ Loop %d ================================\n", j);
         while( best_ifit > EPSILON && gen < MAX_GEN ){
 
             for(i=0; i < POP_SIZE; i++){
@@ -65,12 +67,10 @@ int main(){
                     best_ifit = ifit;
                     best = x;
                 }
-
+                gen++;
             }
             x = best;
             EQUATION;  // y = f(x)
-
-            printf("Generations %d with best solution:  x= %f --> f(x)= %f\n\n", ++gen, best, y);
 
             offspring( best, MUTATION_STRENGTH, population, POP_SIZE);        
             // if (best_ifit > 0){
@@ -79,7 +79,11 @@ int main(){
             //     fit = -1.0;
             // }
             // printf("%d, %f\n", ++gen, fit);
+
+            
         }
+        printf("Generations %d with best solution:  x= %f --> f(x)= %f\n========================================================================\n\n", ++gen, best, y);
+
 }
     
 }
