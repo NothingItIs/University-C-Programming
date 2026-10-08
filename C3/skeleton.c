@@ -61,13 +61,7 @@ int main(){
                 best_ifit = ifit;
                 best = x;
             }
-            if (best_ifit > 0){
-                fit = 1/best_ifit;
-            } else {
-                fit = -1.0;
-            }
 
-            printf("%d, %f\n", gen++, fit);
         }
         x = best;
         EQUATION;  // y = f(x)
@@ -75,7 +69,16 @@ int main(){
         // printf("Generation %4d with best solution:  x= %f --> f(x)= %f\n\n", gen++, best, y);
 
         offspring( best, MUTATION_STRENGTH, population, POP_SIZE);
+    
+        if (best_ifit > 0){
+            fit = 1/best_ifit;
+        } else {
+            fit = -1.0;
+        }
+        printf("%d, %f\n", gen++, fit);
     }
+
+    
 }
 
 
