@@ -3,7 +3,7 @@
 
 #define FREQ 10
 
-#define complicated 1
+// #define complicated 1
 
 #ifdef complicated
 
@@ -38,10 +38,10 @@ void plotval(float x, int width){
 int main(void){
     unsigned long x;
     x = 0;
-    for(;x < 10000; x++){
+    for(;x < 1000; x++){
         double y = sin(x * FREQ * (M_PI / 180));
         y = (y+1)/2;
-        printf("| x = %04lu y = %5.2f | ", x, y);
+        printf("| x = %04lu | y = %5.2f | ", x, y);
         if (x % 10 == 0){
             printf("---");
         } else {
