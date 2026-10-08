@@ -12,7 +12,7 @@
 #include <math.h>
 #include <float.h>
 
-#define EQUATION   y = pow(x,2) - 4
+#define EQUATION   y = pow(x,4) - 4
 #define Y_TARGET   0.0
 #define EPSILON    0.0001
 
@@ -20,7 +20,7 @@
 #define MAX_GEN    10000
 
 #define MUTATION_STRENGTH  0.1
-#define RND_INIT           2
+#define RND_INIT         4
 
 #define INIT_RANGE 20
 
@@ -38,8 +38,9 @@ int main(){
     float x, y;
     float ifit;   // inverse fitness
     int i;
+    float fit;
 
-    printheader();
+    // printheader();
     srand(RND_INIT);
     initpop(population, POP_SIZE);
 
@@ -53,19 +54,25 @@ int main(){
 
             ifit = fabs(y - Y_TARGET);
 
-            printf("x= %f  =>  y=  %+f,    ifit = %f\n", x, y, ifit);
+            // printf("x= %f  =>  y=  %+f,    ifit = %f\n", x, y, ifit);
 
             // Is there a better one?
             if( ifit < best_ifit ){
                 best_ifit = ifit;
                 best = x;
             }
+            if (best_ifit > 0){
+                fit = 1/best_ifit;
+            } else {
+                fit = -1.0;
+            }
+
+            printf("%d, %f\n", gen++, fit);
         }
         x = best;
         EQUATION;  // y = f(x)
 
-        printf("Generation %4d with best solution:  x= %f --> f(x)= %f\n\n",
-                   gen++, best, y);
+        // printf("Generation %4d with best solution:  x= %f --> f(x)= %f\n\n", gen++, best, y);
 
         offspring( best, MUTATION_STRENGTH, population, POP_SIZE);
     }
