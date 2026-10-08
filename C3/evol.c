@@ -40,7 +40,7 @@ int main(){
 
     printheader();
     srand(RND_INIT);
-    initpop(&population, POP_SIZE);
+    initpop(population, POP_SIZE);
 
 
     while( /* SEE PREP */ ){
