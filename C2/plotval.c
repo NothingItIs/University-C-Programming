@@ -3,7 +3,13 @@
 
 #define FREQ 10
 
-// #define complicated 1
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+#define width_ 40
+
+#define complicated 1
 
 #ifdef complicated
 
@@ -41,12 +47,12 @@ int main(void){
     for(;x < 1000; x++){
         double y = sin(x * FREQ * (M_PI / 180));
         y = (y+1)/2;
-        printf("| x = %04lu | y = %5.2f | ", x, y);
+        printf("| x = %04lu y = %5.2f | ", x, y);
         if (x % 10 == 0){
             printf("---");
         } else {
             printf("   ");
         }
-        plotval(y, 40);
+        plotval(y, width_);
     }
 }

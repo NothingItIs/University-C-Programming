@@ -2,6 +2,9 @@
 #include <math.h>
 
 #define FREQ 10
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 
 void plotval(float x, int width){
@@ -15,7 +18,7 @@ void plotval(float x, int width){
 int main(void){
     unsigned long x;
     x = 0;
-    for(;x < 10000; x++){
+    for(;x < 1000; x++){
         double y = sin(x * FREQ * (M_PI / 180));
         y = (y+1)/2;
         printf("| x = %04lu y = %f | ", x, y);
