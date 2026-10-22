@@ -1,3 +1,4 @@
+
 {
     "version": "0.2.0",
     "configurations": [
@@ -24,7 +25,7 @@
 
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            "cwd": "${fileDirname}",
             "environment": [],
             "externalConsole": false,
 

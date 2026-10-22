@@ -1,53 +1,35 @@
-﻿cmake_minimum_required(VERSION 3.16)
+﻿
+cmake_minimum_required(VERSION 3.16)
 
 get_filename_component(REPO_NAME "${CMAKE_SOURCE_DIR}" NAME)
-
 string(MAKE_C_IDENTIFIER "${REPO_NAME}" PROJECT_NAME_SAFE)
 
 project(${PROJECT_NAME_SAFE} LANGUAGES C CXX)
 
+# ============================================================
+# ACTIVE SOURCE
+# ============================================================
 
-# ------------------------------------------------------------
-# The currently open source file is passed in from tasks.json:
-#
-#     -DACTIVE_SOURCE=${file}
-#
-# Example:
-#
-#     C:/Users/.../TBG-2-C/tests/test.c
-# ------------------------------------------------------------
-
-if(NOT DEFINED ACTIVE_SOURCE)
+if(NOT DEFINED ACTIVE_SOURCE OR ACTIVE_SOURCE STREQUAL "")
     message(FATAL_ERROR
         "ACTIVE_SOURCE was not supplied. "
         "Run the project through the VS Code task."
     )
 endif()
 
-
-# Convert Windows-style paths to normal CMake-style paths.
 file(TO_CMAKE_PATH "${ACTIVE_SOURCE}" ACTIVE_SOURCE)
 
+get_filename_component(
+    ACTIVE_SOURCE
+    "${ACTIVE_SOURCE}"
+    ABSOLUTE
+)
 
-# Make sure the selected file actually exists.
 if(NOT EXISTS "${ACTIVE_SOURCE}")
     message(FATAL_ERROR
         "The selected source file does not exist: ${ACTIVE_SOURCE}"
     )
 endif()
-
-
-# ------------------------------------------------------------
-# Get the filename of the active source file.
-#
-# Example:
-#
-#     test.c
-#
-# becomes:
-#
-#     ACTIVE_OUTPUT_NAME = test
-# ------------------------------------------------------------
 
 get_filename_component(
     ACTIVE_OUTPUT_NAME
@@ -55,193 +37,265 @@ get_filename_component(
     NAME_WE
 )
 
-
-# CMake target names need to be safe identifiers.
 string(
     MAKE_C_IDENTIFIER
     "${ACTIVE_OUTPUT_NAME}"
     TARGET_NAME
 )
 
+# ============================================================
+# SOURCE DEPENDENCY COLLECTION
+#
+# Start with the active source file.
+#
+# Follow local includes:
+#     #include "player.h"
+#
+# Add matching implementation files:
+#     player.c
+#     player.cc
+#     player.cpp
+#     player.cxx
+#
+# Search ONLY:
+#     - The including file's directory
+#     - The project root
+#
+# Do not scan unrelated folders.
+# ============================================================
 
-# ------------------------------------------------------------
-# Find all C and C++ source files in the project.
-# ------------------------------------------------------------
-
-file(
-    GLOB_RECURSE
-    ALL_SOURCES
-    CONFIGURE_DEPENDS
-
-    "${CMAKE_SOURCE_DIR}/*.c"
-    "${CMAKE_SOURCE_DIR}/*.cc"
-    "${CMAKE_SOURCE_DIR}/*.cpp"
-    "${CMAKE_SOURCE_DIR}/*.cxx"
+set_property(
+    GLOBAL PROPERTY COLLECTED_SOURCES ""
 )
 
-
-# ------------------------------------------------------------
-# Find all header files.
-# ------------------------------------------------------------
-
-file(
-    GLOB_RECURSE
-    ALL_HEADERS
-    CONFIGURE_DEPENDS
-
-    "${CMAKE_SOURCE_DIR}/*.h"
-    "${CMAKE_SOURCE_DIR}/*.hh"
-    "${CMAKE_SOURCE_DIR}/*.hpp"
-    "${CMAKE_SOURCE_DIR}/*.hxx"
+set_property(
+    GLOBAL PROPERTY COLLECTED_HEADERS ""
 )
 
-
-# ------------------------------------------------------------
-# Do not include generated files inside build/ or compiled/.
-# ------------------------------------------------------------
-
-list(
-    FILTER
-    ALL_SOURCES
-    EXCLUDE
-    REGEX "/build/|/compiled/"
+set_property(
+    GLOBAL PROPERTY VISITED_FILES ""
 )
 
-list(
-    FILTER
-    ALL_HEADERS
-    EXCLUDE
-    REGEX "/build/|/compiled/"
-)
+function(collect_dependencies CURRENT_FILE)
 
+    get_filename_component(
+        CURRENT_FILE
+        "${CURRENT_FILE}"
+        ABSOLUTE
+    )
 
-# ------------------------------------------------------------
-# Start the target with the currently selected source file.
-# ------------------------------------------------------------
+    get_property(
+        VISITED
+        GLOBAL PROPERTY VISITED_FILES
+    )
 
-set(
-    TARGET_SOURCES
-    "${ACTIVE_SOURCE}"
-)
-
-
-# ------------------------------------------------------------
-# Add supporting source files automatically.
-#
-# Any other source file containing a REAL main() is NOT added,
-# because that would create multiple main() definitions.
-#
-# Commented-out main() functions are ignored.
-#
-# Example:
-#
-#     // int main(void) { ... }
-#
-# does NOT count as a real main().
-# ------------------------------------------------------------
-
-foreach(SRC IN LISTS ALL_SOURCES)
-
-    # The active source is already included.
-    if("${SRC}" STREQUAL "${ACTIVE_SOURCE}")
-        continue()
+    if(CURRENT_FILE IN_LIST VISITED)
+        return()
     endif()
 
-
-    # Read the source file as text.
-    file(
-        READ
-        "${SRC}"
-        SOURCE_CONTENT
+    set_property(
+        GLOBAL APPEND PROPERTY VISITED_FILES
+        "${CURRENT_FILE}"
     )
 
-
-    # Make a separate copy used only for detecting main().
-    set(
-        SOURCE_FOR_MAIN_CHECK
-        "${SOURCE_CONTENT}"
+    get_filename_component(
+        FILE_EXT
+        "${CURRENT_FILE}"
+        EXT
     )
 
+    string(TOLOWER "${FILE_EXT}" FILE_EXT)
 
-    # --------------------------------------------------------
-    # Remove /* ... */ block comments.
-    # --------------------------------------------------------
+    if(FILE_EXT MATCHES "^\\.(c|cc|cpp|cxx)$")
 
-    string(
-        REGEX REPLACE
-        "/\\*([^*]|\\*+[^*/])*\\*+/"
-        ""
-        SOURCE_FOR_MAIN_CHECK
-        "${SOURCE_FOR_MAIN_CHECK}"
-    )
+        set_property(
+            GLOBAL APPEND PROPERTY COLLECTED_SOURCES
+            "${CURRENT_FILE}"
+        )
 
+    else()
 
-    # --------------------------------------------------------
-    # Remove // single-line comments.
-    # --------------------------------------------------------
-
-    string(
-        REGEX REPLACE
-        "//[^\r\n]*"
-        ""
-        SOURCE_FOR_MAIN_CHECK
-        "${SOURCE_FOR_MAIN_CHECK}"
-    )
-
-
-    # --------------------------------------------------------
-    # Look for a real:
-    #
-    #     int main(
-    #
-    # after comments have been removed.
-    # --------------------------------------------------------
-
-    string(
-        REGEX MATCH
-        "(^|[\r\n])[ \t]*int[ \t\r\n]+main[ \t\r\n]*\\("
-        SOURCE_HAS_MAIN
-        "${SOURCE_FOR_MAIN_CHECK}"
-    )
-
-
-    # --------------------------------------------------------
-    # If there is no real main(), treat the file as a
-    # supporting implementation file.
-    # --------------------------------------------------------
-
-    if(NOT SOURCE_HAS_MAIN)
-
-        list(
-            APPEND
-            TARGET_SOURCES
-            "${SRC}"
+        set_property(
+            GLOBAL APPEND PROPERTY COLLECTED_HEADERS
+            "${CURRENT_FILE}"
         )
 
     endif()
 
-endforeach()
+    get_filename_component(
+        CURRENT_DIR
+        "${CURRENT_FILE}"
+        DIRECTORY
+    )
 
+    # Detect local includes only.
+    # System includes such as <stdio.h> are ignored.
 
-# ------------------------------------------------------------
-# Build one executable from:
-#
-#     active source file
-#
-# plus:
-#
-#     supporting source files without a real main()
-# ------------------------------------------------------------
+    file(
+        STRINGS
+        "${CURRENT_FILE}"
+        INCLUDE_LINES
+        REGEX "^[ \t]*#[ \t]*include[ \t]*\"[^\"]+\""
+    )
+
+    foreach(LINE IN LISTS INCLUDE_LINES)
+
+        string(
+            REGEX REPLACE
+            "^[ \t]*#[ \t]*include[ \t]*\"([^\"]+)\".*"
+            "\\1"
+            INCLUDED_FILE
+            "${LINE}"
+        )
+
+        set(
+            HEADER_PATH
+            "${CURRENT_DIR}/${INCLUDED_FILE}"
+        )
+
+        if(NOT EXISTS "${HEADER_PATH}")
+
+            set(
+                HEADER_PATH
+                "${CMAKE_SOURCE_DIR}/${INCLUDED_FILE}"
+            )
+
+        endif()
+
+        if(NOT EXISTS "${HEADER_PATH}")
+            continue()
+        endif()
+
+        get_filename_component(
+            HEADER_PATH
+            "${HEADER_PATH}"
+            ABSOLUTE
+        )
+
+        # Follow includes inside the header, too.
+
+        collect_dependencies("${HEADER_PATH}")
+
+        get_filename_component(
+            HEADER_DIR
+            "${HEADER_PATH}"
+            DIRECTORY
+        )
+
+        get_filename_component(
+            HEADER_NAME
+            "${HEADER_PATH}"
+            NAME_WE
+        )
+
+        # Add implementation files matching the header.
+
+        foreach(SOURCE_EXT c cc cpp cxx)
+
+            set(
+                RELATED_SOURCE
+                "${HEADER_DIR}/${HEADER_NAME}.${SOURCE_EXT}"
+            )
+
+            if(EXISTS "${RELATED_SOURCE}")
+                collect_dependencies("${RELATED_SOURCE}")
+            endif()
+
+        endforeach()
+
+    endforeach()
+
+endfunction()
+
+# ============================================================
+# COLLECT RELATED FILES
+# ============================================================
+
+collect_dependencies("${ACTIVE_SOURCE}")
+
+get_property(
+    TARGET_SOURCES
+    GLOBAL PROPERTY COLLECTED_SOURCES
+)
+
+get_property(
+    TARGET_HEADERS
+    GLOBAL PROPERTY COLLECTED_HEADERS
+)
+
+list(REMOVE_DUPLICATES TARGET_SOURCES)
+list(REMOVE_DUPLICATES TARGET_HEADERS)
+
+# ============================================================
+# BUILD EXECUTABLE
+# ============================================================
 
 add_executable(
     ${TARGET_NAME}
     ${TARGET_SOURCES}
 )
 
+# ============================================================
+# INCLUDE DIRECTORIES
+# ============================================================
 
-# ------------------------------------------------------------
-# Link the C math library on Linux.
-# ------------------------------------------------------------
+set(
+    INCLUDE_DIRS
+    "${CMAKE_SOURCE_DIR}"
+)
+
+foreach(FILE_PATH IN LISTS TARGET_SOURCES TARGET_HEADERS)
+
+    get_filename_component(
+        FILE_DIR
+        "${FILE_PATH}"
+        DIRECTORY
+    )
+
+    list(
+        APPEND
+        INCLUDE_DIRS
+        "${FILE_DIR}"
+    )
+
+endforeach()
+
+list(REMOVE_DUPLICATES INCLUDE_DIRS)
+
+target_include_directories(
+    ${TARGET_NAME}
+    PRIVATE
+    ${INCLUDE_DIRS}
+)
+
+# ============================================================
+# GCC WARNINGS, DEBUGGING AND STATIC ANALYSIS
+#
+# Original compiler flags preserved.
+# NO compiler or toolchain paths are changed.
+# ============================================================
+
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+
+    target_compile_options(
+        ${TARGET_NAME}
+        PRIVATE
+
+        -Wall
+        -Wextra
+        -Wpedantic
+
+        -g
+        -Og
+
+        -fanalyzer
+    )
+
+endif()
+
+# ============================================================
+# LINUX MATH LIBRARY
+# ============================================================
 
 if(UNIX AND NOT APPLE)
 
@@ -253,117 +307,20 @@ if(UNIX AND NOT APPLE)
 
 endif()
 
-
-# ------------------------------------------------------------
-# GCC warnings, debugging and static analysis.
+# ============================================================
+# OUTPUT DIRECTORY
 #
-# This DOES NOT change your compiler.
-#
-# Your existing MSYS2 UCRT64 GCC remains unchanged.
-# ------------------------------------------------------------
-
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-
-    target_compile_options(
-        ${TARGET_NAME}
-        PRIVATE
-
-        # Useful warnings
-        -Wall
-        -Wextra
-        -Wpedantic
-
-        # Debug information for GDB
-        -g
-
-        # Debug-friendly optimisation
-        -Og
-
-        # GCC static analyser
-        -fanalyzer
-    )
-
-endif()
-
-
-# ------------------------------------------------------------
-# Build include-directory list automatically.
-#
-# Includes:
-#
-#     project root
-#     every source directory
-#     every header directory
-# ------------------------------------------------------------
-
-set(
-    INCLUDE_DIRS
-    "${CMAKE_SOURCE_DIR}"
-)
-
-
-foreach(SRC IN LISTS ALL_SOURCES)
-
-    get_filename_component(
-        SRC_DIR
-        "${SRC}"
-        DIRECTORY
-    )
-
-    list(
-        APPEND
-        INCLUDE_DIRS
-        "${SRC_DIR}"
-    )
-
-endforeach()
-
-
-foreach(HEADER IN LISTS ALL_HEADERS)
-
-    get_filename_component(
-        HEADER_DIR
-        "${HEADER}"
-        DIRECTORY
-    )
-
-    list(
-        APPEND
-        INCLUDE_DIRS
-        "${HEADER_DIR}"
-    )
-
-endforeach()
-
-
-list(
-    REMOVE_DUPLICATES
-    INCLUDE_DIRS
-)
-
-
-target_include_directories(
-    ${TARGET_NAME}
-    PRIVATE
-    ${INCLUDE_DIRS}
-)
-
-
-# ------------------------------------------------------------
-# All final executables go into:
-#
-#     ./compiled/
-#
-# CMake's internal build files remain in:
-#
+# Build system:
 #     ./build/
-# ------------------------------------------------------------
+#
+# Executables:
+#     ./compiled/
+# ============================================================
 
 file(
     MAKE_DIRECTORY
     "${CMAKE_SOURCE_DIR}/compiled"
 )
-
 
 set_target_properties(
     ${TARGET_NAME}
@@ -375,12 +332,6 @@ set_target_properties(
     RUNTIME_OUTPUT_DIRECTORY
     "${CMAKE_SOURCE_DIR}/compiled"
 )
-
-
-# ------------------------------------------------------------
-# Also force the same output location for
-# multi-configuration generators.
-# ------------------------------------------------------------
 
 foreach(
     CONFIG
@@ -399,3 +350,21 @@ foreach(
     )
 
 endforeach()
+
+# ============================================================
+# DISPLAY EXACTLY WHICH FILES ARE COMPILED
+# ============================================================
+
+message(STATUS "")
+message(STATUS "========================================")
+message(STATUS "ACTIVE SOURCE:")
+message(STATUS "  ${ACTIVE_SOURCE}")
+message(STATUS "")
+message(STATUS "SOURCE FILES BEING COMPILED:")
+
+foreach(SRC IN LISTS TARGET_SOURCES)
+    message(STATUS "  ${SRC}")
+endforeach()
+
+message(STATUS "========================================")
+message(STATUS "")

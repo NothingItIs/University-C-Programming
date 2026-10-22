@@ -1,3 +1,4 @@
+
 {
     "version": "2.0.0",
     "tasks": [
@@ -48,7 +49,7 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "detail": "Build the complete project with CMake"
+            "detail": "Build the active file and related sources"
         }
     ]
 }
