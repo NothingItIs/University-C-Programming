@@ -68,9 +68,6 @@ Matrix createMatrixFromFile(const char *filename)
 
 void destroyMatrix(Matrix mat)
 {
-    if (mat.element == NULL) {
-        return;
-    }
     for (int i = 0; i < mat.rows; i++){
         free(mat.element[i]);
     }

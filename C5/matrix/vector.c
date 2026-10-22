@@ -13,9 +13,8 @@
 Vector createVector(const unsigned int nLength)
 {
     Vector v = {nLength, NULL};
-    if (nLength > 0) {
-        v.element = calloc(nLength, sizeof(double));
-    }
+    v.element = calloc(nLength, sizeof(*v.element));
+
     return v;
 }
 

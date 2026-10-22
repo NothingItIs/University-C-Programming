@@ -22,7 +22,7 @@ typedef enum {
 } CompType;
 
 typedef struct {
-    char name[64];
+    char name[1000];
     unsigned int n1;
     unsigned int n2;
     double value;

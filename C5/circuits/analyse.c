@@ -25,8 +25,7 @@ int main(int argc, char *argv[])
 
     c = createCircuitFromFile(argv[1]);
     analyseCircuit(c);
-    destroyCircuit(c);
-
-	return SUCCESS;
+    
+    return SUCCESS;
 }
 
