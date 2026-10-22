@@ -38,8 +38,8 @@ int main(void) {
     }
     p[strlen(p)] = '\0';
     fputs(p, openedFileCapital);
-    encipher(p, c, ((rand()/RAND_MAX)*26));
-    fputs(c, openedFileEnciphered);
+    // encipher(p, c, (((rand()/RAND_MAX)-0.5)*RAND_MAX));
+    fputs(p, openedFileEnciphered);
     fclose(openedFile);
     fclose(openedFileCapital);
     fclose(openedFileEnciphered);
@@ -47,10 +47,6 @@ int main(void) {
     int x[26]={0};
     calculateHistogram("/workspaces/University-C-Programming/C4/file_cap.txt", x);
     int y[26] = {0};
-    calculateHistogram("/workspaces/University-C-Programming/C4/file_enc.txt", y);
-    printHistogram(x);
-    putchar('\n');
-    printHistogram(y);
 
     int max = 0;
     for (int i = 0; i < 26; i++){
@@ -60,10 +56,18 @@ int main(void) {
     }
     
     char o[74764];
-
-    decipher(c,o,((max - ('E' - 'A') + 26)%26));
+    int shift =((max - ('E' - 'A') + 26)%26);
+    decipher(p,o,shift);
     fputs(o, openedFileDeciphered);
     fclose(openedFileDeciphered);
+
+    calculateHistogram("/workspaces/University-C-Programming/C4/file_dec.txt", y);
+    printHistogram(x);
+    putchar('\n');
+    printHistogram(y);
+
+
+    printf("\nShift: %d\n", shift);
 }
 
 void calculateHistogram(char * fileName, int alphabets[26]){
@@ -91,9 +95,10 @@ void printHistogram(const int alphabets[26]){
 }
 
 void encipher(const char *p, char *c, const unsigned int offset){
+    int k = (((offset % 26)+26)%26);
     for (int i = 0; p[i] != '\0'; i++){
         if (isalpha(p[i])){
-            c[i] = p[i] + offset;
+            c[i] = p[i] + k;
             if (c[i] > 'Z') {
                 c[i] -= 26;
             }
@@ -109,9 +114,10 @@ void encipher(const char *p, char *c, const unsigned int offset){
 }
 
 void decipher(const char *c, char *p, const unsigned int offset){
+    int k = (((offset % 26)+26)%26);
     for (int i = 0; c[i] != '\0'; i++){
         if (isalpha(c[i])){
-            p[i] = c[i] - offset;
+            p[i] = c[i] - k;
             if (p[i] < 'A') {
                 p[i] += 26;
             }
